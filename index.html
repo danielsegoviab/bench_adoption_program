@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Van Cortlandt Park bench adoption</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Libre+Caslon+Text:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  /* ---------- Design tokens ---------- */
+  :root {
+    --bg: #F2F4EE;        /* pale park paper */
+    --surface: #FFFFFF;
+    --ink: #1F2A22;       /* deep green-black text */
+    --muted: #5E6B60;
+    --line: #D5DACF;
+    --green: #2E6B3F;     /* available: park-sign green */
+    --green-soft: #E3EEE4;
+    --wood: #7A5230;      /* adopted: bench slat wood */
+    --wood-soft: #EFE4D8;
+    --brass: #C2A265;     /* dedication plaque */
+    --brass-dark: #8C7240;
+    --warn: #A4541B;      /* ending soon */
+    --sans: "Public Sans", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    --serif: "Libre Caslon Text", Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.5; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px 64px; }
+
+  /* ---------- Header ---------- */
+  header h1 { font-size: 2rem; line-height: 1.15; margin: 0 0 8px; font-weight: 700; letter-spacing: -0.01em; }
+  header p { margin: 0; color: var(--muted); max-width: 62ch; }
+  .stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 16px; min-width: 130px; }
+  .stat strong { display: block; font-size: 1.5rem; line-height: 1.2; }
+  .stat span { color: var(--muted); font-size: 0.875rem; }
+  .stat.available strong { color: var(--green); }
+  .stat.adopted strong { color: var(--wood); }
+  .stat.soon strong { color: var(--warn); }
+
+  /* ---------- Filters ---------- */
+  .filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+  .filters label { display: flex; flex-direction: column; gap: 4px; font-size: 0.875rem; font-weight: 600; }
+  .filters input, .filters select { font: inherit; font-weight: 400; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; background: #fff; color: var(--ink); min-width: 180px; }
+  .filters .grow { flex: 1; }
+  .filters .grow input { width: 100%; }
+  .legend { display: flex; gap: 16px; font-size: 0.875rem; color: var(--muted); margin: 16px 0 8px; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+
+  /* ---------- Bench grid ---------- */
+  .zone { margin-top: 28px; }
+  .zone h2 { font-size: 1.125rem; margin: 0 0 10px; display: flex; gap: 10px; align-items: baseline; }
+  .zone h2 small { color: var(--muted); font-weight: 400; font-size: 0.875rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 6px; }
+  .tile { font: inherit; font-size: 0.8125rem; font-weight: 600; padding: 10px 0; border-radius: 4px; cursor: pointer; border: 2px solid var(--green); background: var(--green-soft); color: var(--green); }
+  .tile.adopted { border-color: var(--wood); background: var(--wood); color: #fff; }
+  .tile.soon { border-color: var(--warn); }
+  .tile:hover { filter: brightness(0.95); }
+  .tile:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--brass); outline-offset: 2px; }
+  .empty { padding: 40px; text-align: center; color: var(--muted); background: var(--surface); border: 1px dashed var(--line); border-radius: 6px; margin-top: 24px; }
+
+  /* ---------- Detail dialog ---------- */
+  dialog { border: none; border-radius: 8px; padding: 0; width: min(460px, 94vw); color: var(--ink); }
+  dialog::backdrop { background: rgba(31, 42, 34, 0.45); }
+  .dlg { padding: 24px; }
+  .dlg-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+  .dlg-head h3 { margin: 0; font-size: 1.375rem; }
+  .dlg-head p { margin: 2px 0 0; color: var(--muted); }
+  .close { font: inherit; font-size: 1.5rem; line-height: 1; background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px 8px; }
+  .badge { display: inline-block; font-size: 0.8125rem; font-weight: 600; padding: 3px 10px; border-radius: 99px; margin-top: 12px; }
+  .badge.available { background: var(--green-soft); color: var(--green); }
+  .badge.adopted { background: var(--wood-soft); color: var(--wood); }
+  .badge.soon { background: #F6E3D3; color: var(--warn); }
+
+  /* The memorable element: adopted benches show their dedication plaque */
+  .plaque { margin: 20px 0; padding: 18px 20px; border-radius: 4px; text-align: center; font-family: var(--serif);
+    background: linear-gradient(160deg, #D8BD84, var(--brass) 55%, #A98A52);
+    color: #3B2E15; border: 2px solid var(--brass-dark); box-shadow: inset 0 1px 0 rgba(255,255,255,0.4); }
+  .plaque .dedication { font-style: italic; font-size: 1.0625rem; line-height: 1.6; }
+  .plaque .by { margin-top: 6px; font-size: 0.9375rem; }
+
+  dl.facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 16px 0 0; }
+  dl.facts dt { color: var(--muted); }
+  dl.facts dd { margin: 0; font-weight: 500; }
+
+  form.adopt { display: flex; flex-direction: column; gap: 14px; margin-top: 20px; }
+  form.adopt label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 0.9375rem; }
+  form.adopt label span.hint { font-weight: 400; color: var(--muted); font-size: 0.8125rem; }
+  form.adopt input, form.adopt select { font: inherit; font-weight: 400; padding: 9px 10px; border: 1px solid var(--line); border-radius: 4px; }
+  .error { color: #A12C2C; font-size: 0.875rem; min-height: 1.2em; margin: 0; }
+  .btn { font: inherit; font-weight: 600; padding: 11px 16px; border-radius: 4px; border: none; cursor: pointer; background: var(--green); color: #fff; }
+  .btn:hover { filter: brightness(1.08); }
+  .note { font-size: 0.875rem; color: var(--muted); margin: 16px 0 0; }
+
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 6px; display: none; }
+  footer { margin-top: 48px; font-size: 0.875rem; color: var(--muted); }
+  footer button { font: inherit; background: none; border: none; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 0; }
+
+  @media (max-width: 600px) { header h1 { font-size: 1.6rem; } .filters input, .filters select { min-width: 0; width: 100%; } .filters label { flex: 1 1 100%; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Van Cortlandt Park bench adoption</h1>
+    <p>See which benches are adopted, who adopted them and for how long. Pick an available bench to adopt it.</p>
+  </header>
+
+  <section class="stats" id="stats" aria-live="polite"></section>
+
+  <section class="filters" aria-label="Filter benches">
+    <label class="grow">Search
+      <input type="search" id="search" placeholder="Bench number or adopter name">
+    </label>
+    <label>Status
+      <select id="statusFilter">
+        <option value="all">All benches</option>
+        <option value="available">Available</option>
+        <option value="adopted">Adopted</option>
+        <option value="soon">Adoption ending within 60 days</option>
+      </select>
+    </label>
+    <label>Area of the park
+      <select id="zoneFilter"><option value="all">All areas</option></select>
+    </label>
+  </section>
+
+  <div class="legend">
+    <span><i style="background:var(--green-soft);border:2px solid var(--green)"></i>Available</span>
+    <span><i style="background:var(--wood)"></i>Adopted</span>
+    <span><i style="background:var(--wood);border:2px solid var(--warn)"></i>Adoption ending soon</span>
+  </div>
+
+  <main id="benches"></main>
+
+  <footer>
+    Adoptions you make are saved in this browser only. Bench locations and existing adoptions are sample data.
+    <button type="button" id="resetBtn">Reset my adoptions</button>
+  </footer>
+</div>
+
+<dialog id="dialog"><div class="dlg" id="dialogBody"></div></dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* =====================================================================
+   1. SETTINGS
+   ===================================================================== */
+const STORAGE_KEY = "vcp-bench-adoptions-v1";   // where new adoptions are saved
+const ENDING_SOON_DAYS = 60;                    // "ending soon" threshold
+const DURATIONS = [6, 12, 24, 36, 60];          // months a donor can choose
+
+// Areas of the park. The count per area adds up to 512 benches.
+// lat/lng are approximate area centers, stored for a future map view.
+const ZONES = [
+  { name: "Parade Ground",           lat: 40.8905, lng: -73.8930, count: 80 },
+  { name: "Van Cortlandt Lake",      lat: 40.8960, lng: -73.8880, count: 70 },
+  { name: "Van Cortlandt House",     lat: 40.8920, lng: -73.8905, count: 70 },
+  { name: "John Muir Trail",         lat: 40.8990, lng: -73.8740, count: 65 },
+  { name: "Putnam Trail",            lat: 40.9020, lng: -73.8850, count: 62 },
+  { name: "Northwest Forest",        lat: 40.9050, lng: -73.8920, count: 60 },
+  { name: "Nature Center",           lat: 40.8935, lng: -73.8970, count: 55 },
+  { name: "Golf Course",             lat: 40.8990, lng: -73.8810, count: 50 },
+];
+
+/* =====================================================================
+   2. DATE HELPERS (all dates are plain calendar days, no times)
+   ===================================================================== */
+function today() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+function toISO(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function fromISO(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function addMonths(d, n) { const r = new Date(d); r.setMonth(r.getMonth() + n); return r; }
+function daysBetween(a, b) { return Math.round((b - a) / 86400000); }
+function pretty(s) { return fromISO(s).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }); }
+
+/* =====================================================================
+   3. SAMPLE DATA
+   A seeded random generator means every visitor sees the same benches
+   and the same existing adoptions.
+   ===================================================================== */
+function seededRandom(seed) {
+  return function () {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const rand = seededRandom(20260922);
+const pick = (arr) => arr[Math.floor(rand() * arr.length)];
+
+const FIRST = ["Maria", "James", "Aisha", "Daniel", "Sofia", "Kwame", "Linda", "Carlos", "Priya", "Thomas", "Grace", "Luis", "Hannah", "Omar", "Rosa", "Michael", "Yuki", "Esther", "Patrick", "Ana"];
+const LAST = ["Rivera", "O'Connor", "Johnson", "Nguyen", "Goldberg", "Mensah", "Martinez", "Kowalski", "Patel", "Brennan", "Diaz", "Cohen", "Williams", "Santos", "Murphy", "Okafor"];
+const GROUPS = ["Riverdale Rotary Club", "Friends of Van Cortlandt Park", "Kingsbridge Running Club", "Bronx Science Class of 1998", "Manhattan College Alumni", "Fieldston Garden Society"];
+const DEDICATIONS = ["In loving memory of", "For my father,", "Dedicated to", "In honor of", "For the walkers of this path, from"];
+
+// Build the benches
+const benches = [];
+let benchNumber = 1;
+for (const z of ZONES) {
+  for (let i = 0; i < z.count; i++) {
+    benches.push({
+      id: "B-" + String(benchNumber++).padStart(3, "0"),
+      zone: z.name,
+      lat: +(z.lat + (rand() - 0.5) * 0.004).toFixed(5),
+      lng: +(z.lng + (rand() - 0.5) * 0.005).toFixed(5),
+    });
+  }
+}
+
+// Build existing adoptions. Dates are relative to today so the demo
+// always contains current, ending-soon and already-expired adoptions.
+const seedAdoptions = [];
+for (const b of benches) {
+  if (rand() > 0.42) continue;
+  const months = pick([6, 12, 12, 24, 24, 36, 60]);
+  const ageDays = Math.floor(rand() * (months * 30 + 150)); // some will have expired
+  const start = addDays(today(), -ageDays);
+  const isGroup = rand() < 0.2;
+  const adopter = isGroup ? pick(GROUPS) : pick(FIRST) + " " + pick(LAST);
+  const dedication = rand() < 0.45 ? pick(DEDICATIONS) + " " + pick(FIRST) + " " + pick(LAST) : "";
+  seedAdoptions.push({ benchId: b.id, adopter, email: "", start: toISO(start), months, dedication, sample: true });
+}
+
+/* =====================================================================
+   4. SAVED ADOPTIONS (localStorage, wrapped so failures don't break the page)
+   ===================================================================== */
+function loadUserAdoptions() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch (e) { return []; }
+}
+function saveUserAdoptions(list) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); return true; }
+  catch (e) { return false; }
+}
+let userAdoptions = loadUserAdoptions();
+
+/* =====================================================================
+   5. CORE LOGIC: status is always calculated from the dates,
+   never stored, so expired adoptions free up benches automatically.
+   ===================================================================== */
+function endDate(a) { return addMonths(fromISO(a.start), a.months); }
+
+function adoptionsFor(benchId) {
+  return seedAdoptions.concat(userAdoptions).filter((a) => a.benchId === benchId);
+}
+
+function statusOf(bench) {
+  const now = today();
+  const all = adoptionsFor(bench.id);
+  const current = all.find((a) => fromISO(a.start) <= now && now < endDate(a));
+  if (current) {
+    const daysLeft = daysBetween(now, endDate(current));
+    return { state: daysLeft <= ENDING_SOON_DAYS ? "soon" : "adopted", adoption: current, daysLeft };
+  }
+  // Most recent expired adoption, shown as history
+  const past = all.filter((a) => endDate(a) <= now).sort((a, b) => endDate(b) - endDate(a))[0];
+  return { state: "available", previous: past || null };
+}
+
+function adoptBench(benchId, adopter, email, months, dedication) {
+  // Re-check right before saving: a bench can't be adopted twice.
+  const bench = benches.find((b) => b.id === benchId);
+  if (!bench) return "That bench doesn't exist.";
+  if (statusOf(bench).state !== "available") return "This bench was just adopted by someone else. Choose another bench.";
+  userAdoptions.push({ benchId, adopter, email, start: toISO(today()), months, dedication, createdAt: new Date().toISOString() });
+  if (!saveUserAdoptions(userAdoptions)) return "Your browser blocked saving. The adoption will be lost when you close this page.";
+  return null;
+}
+
+/* =====================================================================
+   6. RENDERING
+   ===================================================================== */
+const $ = (id) => document.getElementById(id);
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function monthsLabel(n) { return n % 12 === 0 ? (n / 12) + (n === 12 ? " year" : " years") : n + " months"; }
+
+// Fill the area dropdown
+for (const z of ZONES) {
+  const opt = document.createElement("option");
+  opt.value = z.name; opt.textContent = z.name;
+  $("zoneFilter").appendChild(opt);
+}
+
+function renderStats() {
+  let available = 0, adopted = 0, soon = 0;
+  for (const b of benches) {
+    const s = statusOf(b).state;
+    if (s === "available") available++; else adopted++;
+    if (s === "soon") soon++;
+  }
+  $("stats").innerHTML =
+    `<div class="stat"><strong>${benches.length}</strong><span>benches in the program</span></div>` +
+    `<div class="stat available"><strong>${available}</strong><span>available to adopt</span></div>` +
+    `<div class="stat adopted"><strong>${adopted}</strong><span>currently adopted</span></div>` +
+    `<div class="stat soon"><strong>${soon}</strong><span>adoptions ending within ${ENDING_SOON_DAYS} days</span></div>`;
+}
+
+function renderBenches() {
+  const q = $("search").value.trim().toLowerCase();
+  const statusF = $("statusFilter").value;
+  const zoneF = $("zoneFilter").value;
+  let html = "", shown = 0;
+
+  for (const z of ZONES) {
+    if (zoneF !== "all" && zoneF !== z.name) continue;
+    const tiles = [];
+    for (const b of benches.filter((x) => x.zone === z.name)) {
+      const st = statusOf(b);
+      if (statusF === "available" && st.state !== "available") continue;
+      if (statusF === "adopted" && st.state === "available") continue;
+      if (statusF === "soon" && st.state !== "soon") continue;
+      if (q) {
+        const name = st.adoption ? st.adoption.adopter.toLowerCase() : "";
+        if (!b.id.toLowerCase().includes(q) && !name.includes(q)) continue;
+      }
+      const cls = st.state === "available" ? "" : st.state === "soon" ? "adopted soon" : "adopted";
+      const label = st.state === "available" ? "available" : "adopted by " + st.adoption.adopter;
+      tiles.push(`<button class="tile ${cls}" data-id="${b.id}" aria-label="Bench ${b.id}, ${esc(label)}">${b.id.slice(2)}</button>`);
+    }
+    if (tiles.length) {
+      shown += tiles.length;
+      html += `<section class="zone"><h2>${esc(z.name)} <small>${tiles.length} shown</small></h2><div class="grid">${tiles.join("")}</div></section>`;
+    }
+  }
+  $("benches").innerHTML = shown ? html : `<div class="empty">No benches match these filters. Clear the search or choose "All benches".</div>`;
+}
+
+function renderAll() { renderStats(); renderBenches(); }
+
+/* =====================================================================
+   7. BENCH DETAIL DIALOG
+   ===================================================================== */
+function openBench(id) {
+  const b = benches.find((x) => x.id === id);
+  const st = statusOf(b);
+  let body = `<div class="dlg-head"><div><h3>Bench ${b.id}</h3><p>${esc(b.zone)}</p></div>
+    <button class="close" type="button" aria-label="Close" onclick="closeDialog()">&times;</button></div>`;
+
+  if (st.state !== "available") {
+    const a = st.adoption;
+    const until = toISO(endDate(a));
+    body += st.state === "soon"
+      ? `<span class="badge soon">Adopted, ending in ${st.daysLeft} days</span>`
+      : `<span class="badge adopted">Adopted</span>`;
+    body += `<div class="plaque">${a.dedication ? `<div class="dedication">${esc(a.dedication)}</div>` : ""}
+      <div class="by">Adopted by ${esc(a.adopter)}</div></div>`;
+    body += `<dl class="facts">
+      <dt>Adopted by</dt><dd>${esc(a.adopter)}</dd>
+      <dt>Since</dt><dd>${pretty(a.start)}</dd>
+      <dt>Until</dt><dd>${pretty(until)}</dd>
+      <dt>Length</dt><dd>${monthsLabel(a.months)}</dd>
+    </dl>
+    <p class="note">This bench becomes available to adopt again on ${pretty(until)}.</p>`;
+  } else {
+    body += `<span class="badge available">Available</span>`;
+    if (st.previous) body += `<p class="note">Previously adopted by ${esc(st.previous.adopter)} until ${pretty(toISO(endDate(st.previous)))}.</p>`;
+    body += `<form class="adopt" id="adoptForm" novalidate>
+      <label>Your name, or your organization's name
+        <input name="adopter" required maxlength="60" autocomplete="name"></label>
+      <label>Email
+        <span class="hint">Used only to contact you about your bench. Not shown publicly.</span>
+        <input name="email" type="email" required autocomplete="email"></label>
+      <label>Adopt for
+        <select name="months">${DURATIONS.map((m) => `<option value="${m}" ${m === 12 ? "selected" : ""}>${monthsLabel(m)}</option>`).join("")}</select></label>
+      <label>Plaque dedication (optional)
+        <span class="hint">Up to 60 characters, for example "In memory of Rosa Diaz".</span>
+        <input name="dedication" maxlength="60"></label>
+      <p class="error" id="formError" role="alert"></p>
+      <button class="btn" type="submit">Adopt bench ${b.id}</button>
+    </form>`;
+  }
+
+  $("dialogBody").innerHTML = body;
+  $("dialog").showModal();
+
+  const form = $("adoptForm");
+  if (form) form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const f = new FormData(form);
+    const adopter = f.get("adopter").trim();
+    const email = f.get("email").trim();
+    const months = Number(f.get("months"));
+    const dedication = f.get("dedication").trim();
+    if (!adopter) return showError("Enter your name or your organization's name.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showError("Enter a valid email address, like name@example.com.");
+    if (!DURATIONS.includes(months)) return showError("Choose how long to adopt the bench for.");
+    const err = adoptBench(b.id, adopter, email, months, dedication);
+    if (err) return showError(err);
+    renderAll();
+    openBench(b.id);                       // show the new plaque
+    toast(`Bench ${b.id} adopted. Thank you, ${adopter}.`);
+  });
+}
+function showError(msg) { $("formError").textContent = msg; }
+function closeDialog() { $("dialog").close(); }
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(t._timer); t._timer = setTimeout(() => (t.style.display = "none"), 3500);
+}
+
+/* =====================================================================
+   8. EVENTS
+   ===================================================================== */
+$("benches").addEventListener("click", (e) => {
+  const tile = e.target.closest(".tile");
+  if (tile) openBench(tile.dataset.id);
+});
+$("dialog").addEventListener("click", (e) => { if (e.target === $("dialog")) closeDialog(); }); // click outside to close
+["search", "statusFilter", "zoneFilter"].forEach((id) => $(id).addEventListener("input", renderBenches));
+$("resetBtn").addEventListener("click", () => {
+  if (!confirm("Remove the adoptions you made in this browser? Sample adoptions stay.")) return;
+  userAdoptions = []; saveUserAdoptions(userAdoptions); renderAll(); toast("Your adoptions were removed.");
+});
+
+renderAll();
+</script>
+</body>
+</html>
