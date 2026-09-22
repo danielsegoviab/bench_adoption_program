@@ -1,6 +1,6 @@
 # Van Cortlandt Park bench adoption
 
-**Live site:** https://YOUR-USERNAME.github.io/bench-adoption/
+**Live site:** https://danielsegoviab.github.io/bench-adoption/
 
 A single source of truth for the park's bench adoption program. Anyone can:
 
