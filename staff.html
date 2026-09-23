@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Staff: Van Cortlandt Park bench adoptions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy-900: #0B2447; --navy: #1D4F91; --cu-blue: #B9D9EB; --cu-pale: #EAF3F9;
+    --bg: #F5F8FB; --surface: #FFFFFF; --ink: #14243A; --muted: #5A6B80; --line: #D6E0EA;
+    --amber: #C97B0A; --red: #A12C2C; --green: #2E6B3F;
+    --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --sans: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.5; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+  h1, h2 { font-family: var(--serif); font-weight: 600; }
+  [hidden] { display: none !important; }
+
+  .masthead { background: var(--navy-900); color: #fff; border-top: 6px solid var(--cu-blue); padding: 18px 0; }
+  .masthead .wrap { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .masthead h1 { margin: 0; font-size: 1.6rem; }
+  .masthead span { color: var(--cu-blue); }
+  .masthead a, .masthead button { color: #fff; font: inherit; background: none; border: 1px solid rgba(185,217,235,.5); border-radius: 6px; padding: 6px 14px; cursor: pointer; text-decoration: none; }
+
+  /* Login */
+  .login { max-width: 400px; margin: 64px auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 28px; }
+  .login h2 { margin: 0 0 6px; }
+  .login p { margin: 0 0 18px; color: var(--muted); }
+  label { display: flex; flex-direction: column; gap: 5px; font-size: 0.875rem; font-weight: 600; color: var(--navy-900); }
+  input, select { font: inherit; font-size: 1rem; font-weight: 400; padding: 9px 12px; border: 1px solid #BFCCDA; border-radius: 6px; background: #fff; color: var(--ink); }
+  .login label { margin-bottom: 14px; }
+  .btn { font: inherit; font-weight: 600; padding: 10px 16px; border-radius: 6px; border: none; cursor: pointer; background: var(--navy); color: #fff; }
+  .btn:hover { background: var(--navy-900); }
+  .btn.secondary { background: #fff; color: var(--navy); border: 1px solid var(--navy); }
+  .login .btn { width: 100%; }
+  .error { color: var(--red); font-size: 0.9rem; min-height: 1.3em; margin: 0 0 10px; }
+
+  /* Summary */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 24px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .stat { padding: 16px 20px; border-left: 1px solid var(--line); }
+  .stat:first-child { border-left: none; }
+  .stat strong { display: block; font-family: var(--serif); font-size: 1.8rem; line-height: 1.15; color: var(--navy-900); }
+  .stat span { color: var(--muted); font-size: 0.9rem; }
+  .stat.warn strong { color: var(--amber); }
+  .stat.good strong { color: var(--green); }
+
+  .toolbar { margin: 22px 0 12px; display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+  .toolbar .grow { flex: 1; min-width: 220px; }
+  .toolbar .grow input { width: 100%; }
+  .count { color: var(--muted); font-size: 0.9rem; margin: 0 0 8px; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; white-space: nowrap; }
+  th { background: var(--cu-pale); color: var(--navy-900); font-weight: 600; cursor: pointer; user-select: none; position: sticky; top: 0; }
+  th[data-sort]::after { content: ""; }
+  th.asc::after { content: " \25B2"; font-size: 0.7em; }
+  th.desc::after { content: " \25BC"; font-size: 0.7em; }
+  td.wrap-ok { white-space: normal; min-width: 180px; }
+  td small { color: var(--muted); display: block; }
+  tr.sample td:first-child::after { content: "sample"; margin-left: 6px; font-size: 0.7rem; color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 0 6px; }
+  .pill { display: inline-block; font-size: 0.8rem; font-weight: 600; padding: 2px 10px; border-radius: 99px; }
+  .pill.active { background: var(--cu-pale); color: var(--navy); }
+  .pill.pending { background: #FBEBD2; color: #8A5306; }
+  .pill.overdue { background: #F6D5D5; color: var(--red); }
+  .pill.soon { background: #FBEBD2; color: #8A5306; }
+  .pill.expired, .pill.upcoming { background: #EEF1F4; color: var(--muted); }
+  .pill.cancelled { background: #EEF1F4; color: var(--muted); text-decoration: line-through; }
+  .actions { display: flex; gap: 6px; }
+  .actions button { font: inherit; font-size: 0.85rem; padding: 4px 10px; border-radius: 5px; cursor: pointer; border: 1px solid var(--line); background: #fff; color: var(--navy); }
+  .actions button.paid { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .actions button.danger { color: var(--red); }
+  .empty { padding: 32px; text-align: center; color: var(--muted); }
+
+  dialog { border: none; border-radius: 10px; padding: 24px; width: min(440px, 94vw); }
+  dialog::backdrop { background: rgba(11, 36, 71, 0.55); }
+  dialog h2 { margin: 0 0 14px; font-size: 1.3rem; }
+  dialog label { margin-bottom: 12px; }
+  dialog .row { display: flex; gap: 10px; justify-content: flex-end; }
+
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--navy-900); color: #fff;
+    padding: 12px 20px; border-radius: 6px; border-left: 4px solid var(--cu-blue); display: none; }
+  @media (max-width: 800px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <h1>Bench adoptions <span>staff</span></h1>
+    <div>
+      <a href="index.html">Public site</a>
+      <button type="button" id="logoutBtn" hidden>Log out</button>
+    </div>
+  </div>
+</header>
+
+<!-- Login -->
+<section class="login" id="loginView" hidden>
+  <h2>Staff login</h2>
+  <p>Park staff only. Accounts are created by the program administrator.</p>
+  <form id="loginForm">
+    <label>Email <input type="email" id="loginEmail" required autocomplete="username"></label>
+    <label>Password <input type="password" id="loginPassword" required autocomplete="current-password"></label>
+    <p class="error" id="loginError" role="alert"></p>
+    <button class="btn" type="submit">Log in</button>
+  </form>
+</section>
+
+<!-- Dashboard -->
+<main class="wrap" id="dashView" hidden>
+  <section class="stats" id="stats"></section>
+
+  <section class="toolbar">
+    <label class="grow">Search
+      <input type="search" id="search" placeholder="Bench, name or email">
+    </label>
+    <label>Status
+      <select id="statusFilter">
+        <option value="all">All (except cancelled)</option>
+        <option value="pending">Awaiting payment</option>
+        <option value="overdue">Payment overdue</option>
+        <option value="active">Active</option>
+        <option value="soon">Ending within 60 days</option>
+        <option value="expired">Expired</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </label>
+    <label>Include sample data
+      <select id="sampleFilter">
+        <option value="yes">Yes</option>
+        <option value="no">No, real adoptions only</option>
+      </select>
+    </label>
+    <button class="btn secondary" type="button" id="csvBtn">Download CSV</button>
+  </section>
+
+  <p class="count" id="count"></p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th data-sort="bench">Bench</th>
+        <th data-sort="adopter">Adopter</th>
+        <th data-sort="start">Start</th>
+        <th data-sort="end">End</th>
+        <th data-sort="fee">Fee</th>
+        <th data-sort="state">Status</th>
+        <th>Actions</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <p style="height:40px"></p>
+</main>
+
+<!-- Edit dialog -->
+<dialog id="editDialog">
+  <h2 id="editTitle">Edit adoption</h2>
+  <form id="editForm">
+    <label>Adopter name <input id="editAdopter" required maxlength="60"></label>
+    <label>Email <input id="editEmail" type="email" maxlength="120"></label>
+    <label>Plaque dedication <input id="editDedication" maxlength="60"></label>
+    <p class="error" id="editError" role="alert"></p>
+    <div class="row">
+      <button class="btn secondary" type="button" id="editCancel">Cancel</button>
+      <button class="btn" type="submit">Save changes</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* =====================================================================
+   SETTINGS (same database as the public site)
+   ===================================================================== */
+const SUPABASE_URL = "https://eaicjkchajltgljejjiz.supabase.co";
+const SUPABASE_KEY = "sb_publishable_C28BnrC_bQdPwKMxvoZKOw_-If7-ab2";
+const PAYMENT_DAYS = 14;        // unpaid reservations are flagged as overdue after this
+const ENDING_SOON_DAYS = 60;
+// Benches are numbered area by area on the public site
+const AREAS = [[1, 90, "Parade Ground"], [91, 107, "Van Cortlandt House"], [108, 113, "Vault Hill"], [114, 195, "South Fields"],
+  [196, 251, "Van Cortlandt Lake"], [252, 299, "Golf Course"], [300, 335, "Putnam Trail"], [336, 472, "Northwest Forest"], [473, 512, "Northeast Forest"]];
+
+if (!window.supabase) document.body.insertAdjacentHTML("beforeend", `<p class="wrap empty">Couldn't load the database library. Check your connection and reload.</p>`);
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = (id) => document.getElementById(id);
+let rows = [];
+let sort = { key: "created", dir: "desc" };
+
+/* ---------- Helpers ---------- */
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function today() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+function fromISO(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
+function daysBetween(a, b) { return Math.round((b - a) / 86400000); }
+function short(s) { return fromISO(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
+function money(n) { return "$" + Number(n).toLocaleString("en-US"); }
+function areaOf(benchId) { const n = Number(benchId.slice(2)); const a = AREAS.find(([lo, hi]) => n >= lo && n <= hi); return a ? a[2] : ""; }
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => (t.style.display = "none"), 3500); }
+
+// One status per adoption, calculated from its dates and payment
+function stateOf(r) {
+  const now = today();
+  if (r.status === "cancelled") return { key: "cancelled", label: "Cancelled" };
+  if (r.status === "pending") {
+    const waited = daysBetween(new Date(r.created_at), new Date());
+    return waited > PAYMENT_DAYS ? { key: "overdue", label: `Payment overdue (${waited} days)` } : { key: "pending", label: "Awaiting payment" };
+  }
+  const start = fromISO(r.start_date), end = fromISO(r.end_date);
+  if (end <= now) return { key: "expired", label: "Expired" };
+  if (start > now) return { key: "upcoming", label: "Starts later" };
+  const left = daysBetween(now, end);
+  if (left <= ENDING_SOON_DAYS) return { key: "soon", label: `Ends in ${left} days` };
+  return { key: "active", label: "Active" };
+}
+
+/* ---------- Login ---------- */
+async function showCorrectView() {
+  const { data } = await db.auth.getSession();
+  const loggedIn = !!data.session;
+  $("loginView").hidden = loggedIn;
+  $("dashView").hidden = !loggedIn;
+  $("logoutBtn").hidden = !loggedIn;
+  if (loggedIn) await load();
+}
+$("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("loginError").textContent = "";
+  const { error } = await db.auth.signInWithPassword({ email: $("loginEmail").value.trim(), password: $("loginPassword").value });
+  if (error) { $("loginError").textContent = "That email and password don't match a staff account."; return; }
+  showCorrectView();
+});
+$("logoutBtn").addEventListener("click", async () => { await db.auth.signOut(); showCorrectView(); });
+
+/* ---------- Data ---------- */
+async function load() {
+  const { data, error } = await db.from("adoptions").select("*").order("created_at", { ascending: false });
+  if (error) { $("rows").innerHTML = `<tr><td colspan="7" class="empty">Couldn't load adoptions: ${esc(error.message)}</td></tr>`; return; }
+  rows = data;
+  render();
+}
+
+async function update(id, changes, doneMsg) {
+  const { error } = await db.from("adoptions").update(changes).eq("id", id);
+  if (error) { toast("Couldn't save: " + error.message); return false; }
+  toast(doneMsg); await load(); return true;
+}
+
+/* ---------- Rendering ---------- */
+function filtered() {
+  const q = $("search").value.trim().toLowerCase();
+  const f = $("statusFilter").value;
+  const noSamples = $("sampleFilter").value === "no";
+  return rows.filter((r) => {
+    const st = stateOf(r).key;
+    if (noSamples && r.is_sample) return false;
+    if (f === "all" && st === "cancelled") return false;
+    if (f === "active" && !["active", "soon"].includes(st)) return false;
+    if (f === "pending" && !["pending", "overdue"].includes(st)) return false;   // overdue is still awaiting payment
+    if (!["all", "active", "pending"].includes(f) && st !== f) return false;
+    if (q && ![r.bench_id, r.adopter, r.email || ""].some((v) => v.toLowerCase().includes(q))) return false;
+    return true;
+  });
+}
+
+function sorted(list) {
+  const val = (r) => ({ bench: r.bench_id, adopter: r.adopter.toLowerCase(), start: r.start_date, end: r.end_date,
+    fee: r.fee, state: stateOf(r).key, created: r.created_at }[sort.key]);
+  return list.slice().sort((a, b) => (val(a) < val(b) ? -1 : val(a) > val(b) ? 1 : 0) * (sort.dir === "asc" ? 1 : -1));
+}
+
+function renderStats() {
+  const live = rows.filter((r) => r.status !== "cancelled");
+  const pending = live.filter((r) => r.status === "pending");
+  const overdue = pending.filter((r) => stateOf(r).key === "overdue");
+  const paid = live.filter((r) => r.status === "paid");
+  const soon = live.filter((r) => stateOf(r).key === "soon");
+  const sum = (l) => l.reduce((t, r) => t + r.fee, 0);
+  $("stats").innerHTML =
+    `<div class="stat warn"><strong>${pending.length}</strong><span>awaiting payment (${money(sum(pending))})${overdue.length ? `, ${overdue.length} overdue` : ""}</span></div>` +
+    `<div class="stat good"><strong>${money(sum(paid))}</strong><span>collected from ${paid.length} adoptions</span></div>` +
+    `<div class="stat"><strong>${live.filter((r) => ["active", "soon"].includes(stateOf(r).key)).length}</strong><span>active adoptions</span></div>` +
+    `<div class="stat warn"><strong>${soon.length}</strong><span>ending within ${ENDING_SOON_DAYS} days (renewal calls)</span></div>`;
+}
+
+function render() {
+  renderStats();
+  const list = sorted(filtered());
+  $("count").textContent = `${list.length} adoption${list.length === 1 ? "" : "s"} shown`;
+  document.querySelectorAll("th[data-sort]").forEach((th) => th.className = th.dataset.sort === sort.key ? sort.dir : "");
+  $("rows").innerHTML = list.length ? list.map((r) => {
+    const st = stateOf(r);
+    const acts = [];
+    if (r.status === "pending") acts.push(`<button class="paid" data-act="paid" data-id="${r.id}">Mark paid</button>`);
+    if (r.status !== "cancelled") acts.push(`<button data-act="edit" data-id="${r.id}">Edit</button>`, `<button class="danger" data-act="cancel" data-id="${r.id}">Cancel</button>`);
+    else acts.push(`<button data-act="restore" data-id="${r.id}">Restore</button>`);
+    return `<tr class="${r.is_sample ? "sample" : ""}">
+      <td><strong>${r.bench_id}</strong><small>${esc(areaOf(r.bench_id))}</small></td>
+      <td class="wrap-ok">${esc(r.adopter)}<small>${esc(r.email || "no email")}</small>${r.dedication ? `<small>Plaque: "${esc(r.dedication)}"</small>` : ""}</td>
+      <td>${short(r.start_date)}</td>
+      <td>${short(r.end_date)}<small>${r.months % 12 ? r.months + " months" : r.months / 12 + (r.months === 12 ? " year" : " years")}</small></td>
+      <td>${money(r.fee)}</td>
+      <td><span class="pill ${st.key}">${esc(st.label)}</span></td>
+      <td><div class="actions">${acts.join("")}</div></td>
+    </tr>`;
+  }).join("") : `<tr><td colspan="7" class="empty">No adoptions match these filters.</td></tr>`;
+}
+
+/* ---------- Actions ---------- */
+$("rows").addEventListener("click", async (e) => {
+  const b = e.target.closest("button[data-act]");
+  if (!b) return;
+  const r = rows.find((x) => x.id === b.dataset.id);
+  if (b.dataset.act === "paid") update(r.id, { status: "paid" }, `Bench ${r.bench_id} marked as paid.`);
+  if (b.dataset.act === "cancel" && confirm(`Cancel ${r.adopter}'s adoption of bench ${r.bench_id}? The bench becomes available again.`))
+    update(r.id, { status: "cancelled" }, `Adoption of bench ${r.bench_id} cancelled.`);
+  if (b.dataset.act === "restore") {
+    // The database refuses this if someone else has adopted the bench in the meantime
+    const { error } = await db.from("adoptions").update({ status: "pending" }).eq("id", r.id);
+    if (error) toast(error.code === "23P01" ? `Bench ${r.bench_id} has been adopted by someone else since.` : "Couldn't restore: " + error.message);
+    else { toast(`Adoption restored as awaiting payment.`); load(); }
+  }
+  if (b.dataset.act === "edit") openEdit(r);
+});
+
+let editing = null;
+function openEdit(r) {
+  editing = r;
+  $("editTitle").textContent = `Edit bench ${r.bench_id}`;
+  $("editAdopter").value = r.adopter; $("editEmail").value = r.email || ""; $("editDedication").value = r.dedication || "";
+  $("editError").textContent = "";
+  $("editDialog").showModal();
+}
+$("editCancel").addEventListener("click", () => $("editDialog").close());
+$("editForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const adopter = $("editAdopter").value.trim();
+  if (!adopter) { $("editError").textContent = "Enter the adopter's name."; return; }
+  const ok = await update(editing.id, { adopter, email: $("editEmail").value.trim() || null, dedication: $("editDedication").value.trim() || null }, "Changes saved.");
+  if (ok) $("editDialog").close();
+});
+
+/* ---------- CSV export (what's currently filtered) ---------- */
+$("csvBtn").addEventListener("click", () => {
+  const head = ["Bench", "Area", "Adopter", "Email", "Dedication", "Start", "End", "Months", "Fee", "Payment", "Status", "Sample"];
+  const cell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const lines = sorted(filtered()).map((r) => [r.bench_id, areaOf(r.bench_id), r.adopter, r.email, r.dedication, r.start_date, r.end_date,
+    r.months, r.fee, r.status, stateOf(r).label, r.is_sample ? "yes" : "no"].map(cell).join(","));
+  const blob = new Blob([[head.join(",")].concat(lines).join("\n")], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = `bench-adoptions-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+});
+
+/* ---------- Events ---------- */
+["search", "statusFilter", "sampleFilter"].forEach((id) => $(id).addEventListener("input", render));
+document.querySelectorAll("th[data-sort]").forEach((th) => th.addEventListener("click", () => {
+  sort = { key: th.dataset.sort, dir: sort.key === th.dataset.sort && sort.dir === "asc" ? "desc" : "asc" };
+  render();
+}));
+showCorrectView();
+</script>
+</body>
+</html>
