@@ -184,7 +184,7 @@
    ===================================================================== */
 const SUPABASE_URL = "https://eaicjkchajltgljejjiz.supabase.co";
 const SUPABASE_KEY = "sb_publishable_C28BnrC_bQdPwKMxvoZKOw_-If7-ab2";
-const PAYMENT_DAYS = 14;        // unpaid reservations are flagged as overdue after this
+const PAYMENT_DAYS = 14;        // unpaid reservations are cancelled by a daily database job after this
 const ENDING_SOON_DAYS = 60;
 // Benches are numbered area by area on the public site
 const AREAS = [[1, 90, "Parade Ground"], [91, 107, "Van Cortlandt House"], [108, 113, "Vault Hill"], [114, 195, "South Fields"],
@@ -212,7 +212,7 @@ function stateOf(r) {
   if (r.status === "cancelled") return { key: "cancelled", label: "Cancelled" };
   if (r.status === "pending") {
     const waited = daysBetween(new Date(r.created_at), new Date());
-    return waited > PAYMENT_DAYS ? { key: "overdue", label: `Payment overdue (${waited} days)` } : { key: "pending", label: "Awaiting payment" };
+    return waited > PAYMENT_DAYS ? { key: "overdue", label: `Overdue, releases at next daily run` } : { key: "pending", label: "Awaiting payment" };
   }
   const start = fromISO(r.start_date), end = fromISO(r.end_date);
   if (end <= now) return { key: "expired", label: "Expired" };

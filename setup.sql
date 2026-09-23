@@ -12,7 +12,7 @@ create table if not exists public.adoptions (
   bench_id    text not null check (bench_id ~ '^B-[0-9]{3}$' and substring(bench_id from 3)::int between 1 and 512),
   adopter     text not null check (char_length(adopter) between 1 and 60),
   email       text check (email is null or email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$'),
-  start_date  date not null default current_date,
+  start_date  date not null default ((now() at time zone 'America/New_York')::date),
   months      int  not null check (months in (6, 12, 24, 36, 60, 120)),
   end_date    date generated always as ((start_date + make_interval(months => months))::date) stored,
   dedication  text check (dedication is null or char_length(dedication) <= 60),
@@ -56,7 +56,8 @@ create policy "Anyone can view adoptions" on public.adoptions
 drop policy if exists "Anyone can adopt" on public.adoptions;
 create policy "Anyone can adopt" on public.adoptions
   for insert to anon, authenticated
-  with check (status = 'pending' and is_sample = false and start_date = current_date);
+  with check (status = 'pending' and is_sample = false
+              and start_date = (now() at time zone 'America/New_York')::date);
 
 drop policy if exists "Staff can edit" on public.adoptions;
 create policy "Staff can edit" on public.adoptions
@@ -107,3 +108,22 @@ from s;
 
 -- Quick check: how many sample adoptions were created
 select count(*) as sample_adoptions from public.adoptions where is_sample;
+
+-- ---------------------------------------------------------------
+-- 4. Release unpaid reservations automatically
+--    Every day at 5:00 a.m. New York time, adoptions still awaiting
+--    payment 14 days after they were made are cancelled, which makes
+--    their benches available again.
+-- ---------------------------------------------------------------
+create extension if not exists pg_cron;
+
+select cron.unschedule('release-unpaid-reservations')
+where exists (select 1 from cron.job where jobname = 'release-unpaid-reservations');
+
+select cron.schedule(
+  'release-unpaid-reservations',
+  '0 9 * * *',   -- 09:00 UTC = 5:00 a.m. in New York
+  $$ update public.adoptions
+     set status = 'cancelled'
+     where status = 'pending' and created_at < now() - interval '14 days' $$
+);

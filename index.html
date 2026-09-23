@@ -549,7 +549,7 @@ function openBench(id) {
     if (a.status === "pending" && isMine(a)) {
       const due = toISO(addDays(fromISO(a.start), PAYMENT_DAYS));
       body += `<div class="fee"><div class="fee-row"><span>Amount due</span><strong>${money(feeFor(a.months))}</strong></div>
-        <p>Pay in cash, or by card or check, at ${PAYMENT_PLACE}, by ${pretty(due)}. Mention bench <span style="white-space:nowrap">${b.id}</span>. Your plaque is installed once payment is received.</p></div>`;
+        <p>Pay in cash, or by card or check, at ${PAYMENT_PLACE}, by ${pretty(due)}. Mention bench <span style="white-space:nowrap">${b.id}</span>. Your plaque is installed once payment is received. Reservations not paid within ${PAYMENT_DAYS} days are released automatically.</p></div>`;
     }
   } else {
     body += `<span class="badge available">Available</span>`;
@@ -565,7 +565,7 @@ function openBench(id) {
       <div class="fee" aria-live="polite">
         <div class="fee-row"><span>Estimated contribution</span><strong id="feeAmount">${money(feeFor(DEFAULT_DURATION))}</strong></div>
         <p>Based on the Van Cortlandt Park Alliance's ${money(FEE_FOR_10_YEARS)} fee for a 10-year bench adoption, prorated for shorter terms.
-        Pay in cash, or by card or check, at ${PAYMENT_PLACE}, within ${PAYMENT_DAYS} days of adopting.</p>
+        Pay in cash, or by card or check, at ${PAYMENT_PLACE}, within ${PAYMENT_DAYS} days of adopting, or the reservation is released.</p>
       </div>
       <label>Plaque dedication (optional)
         <span class="hint">Up to 60 characters, for example "In memory of Rosa Diaz".</span>

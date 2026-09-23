@@ -1,6 +1,6 @@
 # Van Cortlandt Park bench adoption
 
-Live: https://danielsegoviab.github.io/bench_adoption_program/
+Live: https://danielsegoviab.github.io/bench_adoption_program/  
 Staff page: https://danielsegoviab.github.io/bench_adoption_program/staff.html
 
 Take-home for Columbia Software Solutions (option 2, Bench Adoption Program).
@@ -9,8 +9,8 @@ The park has 500+ benches and no single place that says which ones are adopted, 
 
 ## Staff demo login
 
-email: `ADD-DEMO-EMAIL`
-password: `ADD-DEMO-PASSWORD`
+- Email: `css_staff_user@gmail.com`
+- Password: `ColumbiaUniversity`
 
 It's a demo account and everything in the database is sample data, so feel free to click around (mark things paid, cancel, edit).
 
@@ -37,17 +37,12 @@ The benches themselves are fixed and live in the code. Adoptions are the only th
 A few decisions worth explaining:
 
 - **Status is calculated from dates, never stored.** A bench is adopted if it has a non-cancelled adoption that hasn't ended yet. When an adoption ends, the bench frees up on its own; nobody has to remember to update anything.
-- **The database blocks double adoptions, not just the page.** The page checks availability first, but two people could click at the same moment. An exclusion constraint on (bench, date range) makes overlapping adoptions impossible at the database level, and the page turns that error into a friendly message.
+- **The database blocks double adoptions, not just the page.** The page checks availability first, but two people could click at the same moment. An exclusion constraint on (bench, date range) makes overlapping adoptions impossible at the database level, and the page shows the visitor a clear message if it happens.
 - **Permissions live in the database.** The Supabase key in the page is public by design, so row-level security and column grants decide what it can do. Anonymous visitors can read adoptions (minus email and fee) and insert new ones, always as "pending". Only logged-in staff can read emails or update rows. Public sign-ups are off, so staff accounts are created by hand.
 - **The fee is computed by the database** from the duration, so it can't be edited from the browser.
-- **Payment is a status, not a feature.** The brief said no payments, so new adoptions are just reserved as "awaiting payment" and staff mark them paid. Unpaid ones get flagged as overdue after 14 days.
+- **Payment is a status, not a feature.** The brief said no payments, so new adoptions are reserved as "awaiting payment" and staff mark them paid. A scheduled job in the database (pg_cron) runs every morning and releases reservations that are still unpaid after 14 days, so benches never stay blocked by abandoned reservations.
+- **Dates follow New York time.** The database stores start dates in the park's own time zone, and any adoption that hasn't ended (including ones starting later) reserves the bench, so a reserved bench is never offered to someone else.
 - **Map and grid use the same filter function**, so they can't disagree.
-
-## A bug worth mentioning
-
-After connecting the database, adopting a bench late at night didn't change its color. The database runs on UTC, so after 8pm in New York it was already "tomorrow" there, and new adoptions were saved with tomorrow's start date. The page, on New York time, saw an adoption that hadn't started yet and showed the bench as available.
-
-Two fixes: the database now uses New York dates for new adoptions, and the page treats any adoption that hasn't *ended* as taking the bench, including future ones. The second one is more correct anyway, since a reserved bench should never be offered to someone else.
 
 ## Where the data comes from
 
@@ -62,13 +57,11 @@ Two fixes: the database now uses New York dates for new adoptions, and the page 
 - Payment happens in person at the Broadway & W 242nd St entrance within 14 days. That's a demo choice; the real Alliance takes payments online, by check or Zelle.
 - 512 benches across 9 areas.
 
-## What I'd do next
+## Possible extensions
 
 - Confirmation emails to adopters
-- Renewals from the staff page
-- Auto-cancel reservations that stay unpaid (right now staff decide)
-- Spam protection (CAPTCHA or email verification) since anyone can submit an adoption
-- Split `index.html` into separate files; the map data makes it long
+- Renewals directly from the staff page
+- A CAPTCHA or email verification on the adoption form
 
 ## Running it
 
