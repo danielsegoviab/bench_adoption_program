@@ -46,16 +46,18 @@ A few decisions worth explaining:
 
 ## Where the data comes from
 
-- **Fees** follow the real Van Cortlandt Park Alliance program: $3,500 to adopt an existing bench for 10 years (vancortlandt.org/bench). Shorter terms are prorated.
-- **The map** is my own drawing of the park, traced from Google Maps screenshots and lined up with real coordinates using landmarks with known positions (Van Cortlandt House and the 242 St, Woodlawn and Mosholu Pkwy stations). It's accurate to about 30 m. The walking paths were pulled out of the screenshots by detecting the trail lines, and benches are spaced along them. For a real deployment I'd use NYC Open Data or OpenStreetMap instead, since Google's map data isn't free to reuse.
-- **Bench locations and existing adoptions are made up.** The real bench inventory would come from NYC Parks.
+- **Map:** built from OpenStreetMap (© OpenStreetMap contributors, ODbL). It uses the park's official boundary and every mapped path and trail, plus the lake, woods, fields, golf courses, buildings and surrounding roads. The data was exported once and bundled with the page, so the map doesn't depend on a tile server.
+- **Benches:** 10 benches are mapped on OpenStreetMap and appear at their exact locations. There's no public inventory of benches inside NYC parks (NYC Open Data only covers sidewalk and bus-stop seating), so the rest of the 512 are positioned along the park's mapped paths at an even spacing, closer together by the lake and Van Cortlandt House, where seating is densest. Loading the Parks Department's inventory would replace these with no code changes, since each bench is just an ID, an area and coordinates.
+- **Areas** come from the map itself: the named trails (John Muir, Old Croton Aqueduct, Putnam Greenway), the lake shore, the golf courses and the woods.
+- **Fees** follow the Van Cortlandt Park Alliance's program: $3,500 to adopt an existing bench for 10 years (vancortlandt.org/bench). Shorter terms are prorated.
+- **Existing adoptions** are sample data.
 
 ## Assumptions
 
 - One adopter (person or group) per bench at a time.
 - Adoptions start the day they're made and last 6 months to 10 years.
 - Payment happens in person at the Broadway & W 242nd St entrance within 14 days. That's a demo choice; the real Alliance takes payments online, by check or Zelle.
-- 512 benches across 9 areas.
+- 512 benches across 12 areas of the park.
 
 ## Possible extensions
 

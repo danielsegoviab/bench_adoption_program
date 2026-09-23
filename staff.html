@@ -187,8 +187,7 @@ const SUPABASE_KEY = "sb_publishable_C28BnrC_bQdPwKMxvoZKOw_-If7-ab2";
 const PAYMENT_DAYS = 14;        // unpaid reservations are cancelled by a daily database job after this
 const ENDING_SOON_DAYS = 60;
 // Benches are numbered area by area on the public site
-const AREAS = [[1, 90, "Parade Ground"], [91, 107, "Van Cortlandt House"], [108, 113, "Vault Hill"], [114, 195, "South Fields"],
-  [196, 251, "Van Cortlandt Lake"], [252, 299, "Golf Course"], [300, 335, "Putnam Trail"], [336, 472, "Northwest Forest"], [473, 512, "Northeast Forest"]];
+const AREAS = [[1, 15, "Parade Ground"], [16, 32, "Van Cortlandt House"], [33, 65, "Van Cortlandt Lake"], [66, 129, "South Fields"], [130, 197, "Southeast Woods"], [198, 199, "Golf Course"], [200, 220, "Putnam Greenway"], [221, 306, "North Central Woods"], [307, 313, "Old Croton Aqueduct Trail"], [314, 341, "John Muir Trail"], [342, 454, "Northwest Forest"], [455, 512, "Northeast Forest"]];
 
 if (!window.supabase) document.body.insertAdjacentHTML("beforeend", `<p class="wrap empty">Couldn't load the database library. Check your connection and reload.</p>`);
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
