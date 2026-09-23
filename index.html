@@ -216,6 +216,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <!-- Supabase: the shared database -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- EmailJS: sends the confirmation email to adopters -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
 /* =====================================================================
    1. SETTINGS
@@ -225,6 +227,10 @@
 const SUPABASE_URL = "https://eaicjkchajltgljejjiz.supabase.co";
 const SUPABASE_KEY = "sb_publishable_C28BnrC_bQdPwKMxvoZKOw_-If7-ab2";
 const MY_ADOPTIONS_KEY = "vcp-my-adoptions";     // remembers which adoptions this browser made
+
+// Confirmation emails (EmailJS). These IDs are public by design; the account
+// only accepts requests from this site's domain.
+const EMAILJS = { publicKey: "eXBv3T71AoIZRoRqn", serviceId: "service_0cdlqdw", templateId: "template_3rt5ybq" };
 const ENDING_SOON_DAYS = 60;                    // "ending soon" threshold
 const DURATIONS = [6, 12, 24, 36, 60, 120];     // months a donor can choose (120 = the Alliance's standard 10-year term)
 const DEFAULT_DURATION = 120;
@@ -359,6 +365,32 @@ async function adoptBench(benchId, adopter, email, months, dedication) {
   rememberMine(benchId, toISO(today()));
   await loadAdoptions();
   return null;
+}
+
+// Emails the adopter their reservation details. The adoption is already saved,
+// so if the email fails the reservation still stands.
+async function sendConfirmation(bench, adopter, email, months, dedication) {
+  if (!window.emailjs) return false;
+  const start = today();
+  try {
+    await window.emailjs.send(EMAILJS.serviceId, EMAILJS.templateId, {
+      to_name: adopter,
+      to_email: email,
+      bench_id: bench.id,
+      area: bench.zone,
+      length: monthsLabel(months),
+      start_date: pretty(toISO(start)),
+      end_date: pretty(toISO(addMonths(start, months))),
+      dedication: dedication || "No dedication",
+      amount: money(feeFor(months)),
+      payment_place: PAYMENT_PLACE,
+      due_date: pretty(toISO(addDays(start, PAYMENT_DAYS))),
+    }, { publicKey: EMAILJS.publicKey });
+    return true;
+  } catch (e) {
+    console.error("Confirmation email failed", e);
+    return false;
+  }
 }
 
 /* =====================================================================
@@ -564,7 +596,7 @@ function openBench(id) {
       <label>Your name, or your organization's name
         <input name="adopter" required maxlength="60" autocomplete="name"></label>
       <label>Email
-        <span class="hint">Used only to contact you about your bench. Not shown publicly.</span>
+        <span class="hint">We&rsquo;ll email you a confirmation with the payment details. Not shown publicly.</span>
         <input name="email" type="email" required autocomplete="email"></label>
       <label>Adopt for
         <select name="months" id="monthsSelect">${DURATIONS.map((m) => `<option value="${m}" ${m === DEFAULT_DURATION ? "selected" : ""}>${monthsLabel(m)}</option>`).join("")}</select></label>
@@ -603,7 +635,11 @@ function openBench(id) {
     if (err) { renderAll(); return showError(err); }
     renderAll();
     openBench(b.id);                       // show the new plaque
-    toast(`Bench ${b.id} adopted. Thank you, ${adopter}. Amount due: ${money(feeFor(months))}.`);
+    toast(`Bench ${b.id} adopted. Thank you, ${adopter}. Sending your confirmation email...`);
+    const sent = await sendConfirmation(b, adopter, email, months, dedication);
+    toast(sent
+      ? `Bench ${b.id} is reserved. We've emailed the details to ${email}.`
+      : `Bench ${b.id} is reserved. We couldn't send the confirmation email, so please note the amount due: ${money(feeFor(months))}.`);
   });
 }
 function showError(msg) { $("formError").textContent = msg; }

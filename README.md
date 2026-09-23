@@ -21,6 +21,7 @@ It's a demo account and everything in the database is sample data, so feel free 
 - Filter by status (available / adopted / ending soon) and area, search by bench number or adopter name
 - Click a bench to see who adopted it and until when, or to adopt it
 - The adoption form shows the fee estimate and where to pay
+- Adopters get a confirmation email with their bench, dates, amount due, where to pay and the payment deadline
 
 **Staff page (`staff.html`)**
 - Every adoption, including emails (which the public never sees)
@@ -30,7 +31,7 @@ It's a demo account and everything in the database is sample data, so feel free 
 
 ## How it's built
 
-Plain HTML/CSS/JS, no build step. Leaflet for the map, Supabase (Postgres) for the database. Hosted on GitHub Pages.
+Plain HTML/CSS/JS, no build step. Leaflet for the map, Supabase (Postgres) for the database, EmailJS for confirmation emails. Hosted on GitHub Pages.
 
 The benches themselves are fixed and live in the code. Adoptions are the only thing that changes, so they're the only thing in the database: one `adoptions` table. `setup.sql` has the schema, permissions and sample data.
 
@@ -42,6 +43,7 @@ A few decisions worth explaining:
 - **The fee is computed by the database** from the duration, so it can't be edited from the browser.
 - **Payment is a status, not a feature.** The brief said no payments, so new adoptions are reserved as "awaiting payment" and staff mark them paid. A scheduled job in the database (pg_cron) runs every morning and releases reservations that are still unpaid after 14 days, so benches never stay blocked by abandoned reservations.
 - **Dates follow New York time.** The database stores start dates in the park's own time zone, and any adoption that hasn't ended (including ones starting later) reserves the bench, so a reserved bench is never offered to someone else.
+- **Emails don't block adoptions.** The confirmation email is sent after the adoption is saved. If it can't be delivered, the reservation still stands and the page shows the amount due instead.
 - **Map and grid use the same filter function**, so they can't disagree.
 
 ## Where the data comes from
@@ -61,7 +63,6 @@ A few decisions worth explaining:
 
 ## Possible extensions
 
-- Confirmation emails to adopters
 - Renewals directly from the staff page
 - A CAPTCHA or email verification on the adoption form
 
