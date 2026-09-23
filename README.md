@@ -1,52 +1,75 @@
 # Van Cortlandt Park bench adoption
 
-**Live site:** https://danielsegoviab.github.io/bench_adoption_program/
+Live: https://danielsegoviab.github.io/bench_adoption_program/
+Staff page: https://danielsegoviab.github.io/bench_adoption_program/staff.html
 
-A single source of truth for the park's bench adoption program, backed by a shared database. Anyone can:
+Take-home for Columbia Software Solutions (option 2, Bench Adoption Program).
 
-1. **View** all 512 benches, see which are adopted, by whom, and until when.
-2. **Adopt** an available bench by entering a name, email, duration and optional plaque dedication (payment happens in person).
-3. **Staff** (`staff.html`, login required) can see every adoption including emails, mark adoptions as paid, fix names or dedications, cancel or restore adoptions, and download everything as a CSV.
-
-## How it works
-- **One shared database (Supabase / Postgres).** All adoptions live in one `adoptions` table, so every visitor and every staff member sees the same data. The schema, rules and sample data are in `setup.sql`.
-- **The database prevents double adoptions itself.** An exclusion constraint refuses two non-cancelled adoptions of the same bench with overlapping dates, even if two people click at the same moment.
-- **Privacy is enforced by the database, not the page.** The page's key is public by design, so row-level security and column permissions decide what it can do: visitors can read adoptions without emails and create new ones (always as "pending payment"); only logged-in staff can read emails or edit. Fees are calculated by the database, so they can't be changed from a browser.
-- **Payment workflow.** New adoptions are reserved as "awaiting payment". Staff mark them paid when the donor pays at the entrance; unpaid reservations are flagged as overdue after 14 days so staff can follow up or cancel.
-- **Staff accounts** are created by the administrator in Supabase; public sign-ups are disabled.
-
-## How to use it
-- Benches are grouped by area of the park. Green tiles are available, brown tiles are adopted, and brown tiles with an orange border have adoptions ending within 60 days.
-- Switch between **Grid** and **Map** views. Both show the same benches with the same filters.
-- Filter by status or area, or search by bench number or adopter name.
-- Click any bench (a tile or a dot on the map) to see its details, or to adopt it if it's available.
-
-## Key decisions
-- **Status is calculated, not stored.** A bench's status comes from its adoption dates every time the page loads. When an adoption ends, the bench becomes available automatically, with no manual cleanup. This avoids the "stale spreadsheet" problem the program has today.
-- **No double adoptions.** Availability is re-checked at the moment of adoption, so a bench can only have one active adopter.
-- **"Ending soon" view.** Staff can filter for adoptions ending within 60 days to contact donors about renewing.
-- **Adoption history kept.** Past adoptions are never deleted, so an available bench shows who adopted it last.
-- **Email is private.** Adopters' emails are collected for staff but never displayed publicly.
-- **Map and grid share one data source.** One filter function feeds both views, so they can never disagree. The map is an illustrated sketch of the park's main features (lake, lawns, forests, paths, surrounding roads), traced from Google Maps screenshots and converted to real coordinates using landmarks with published coordinates (accurate to roughly 30 m). The walking paths were detected automatically from the trail lines in those screenshots, and benches are spaced evenly along them, with denser spacing by the lake and the House and sparser on golf paths. The grid opens by default because it's faster for scanning 512 benches; the map helps when location matters ("the bench by the lake").
-- **Design.** A Columbia-blue palette with Source Serif and Source Sans type. Status is shown by fill as well as color (outlined = available, solid = adopted, amber ring = ending soon), so it stays readable for color-blind users.
-- **Real fees.** The adoption form shows an estimated contribution based on the Van Cortlandt Park Alliance's actual price ($3,500 to adopt an existing bench for 10 years, per vancortlandt.org/bench), prorated for shorter terms. After adopting, the bench shows the amount due and where to pay.
-- **One file, no build step.** Plain HTML, CSS and JavaScript keep the project simple to read, run and host.
-
-## Assumptions
-- One adopter (person or organization) per bench at a time.
-- Adoptions start on the day they're made and last 6, 12, 24, 36, 60 or 120 months (the Alliance's standard term is 10 years).
-- Payment is made in person (cash, card or check) at the Broadway & W 242nd St entrance within 14 days. This is a demo choice; the real Alliance takes payment online, by check or by Zelle.
-- Renewals and early cancellations are out of scope.
-- The park has 512 benches in 9 areas, placed on real paths (the Northeast Forest, which the screenshots didn't cover in detail, uses an approximate loop). Bench locations and existing adoptions are **generated sample data**. In production they would come from the Parks Department's inventory and current records.
-
-## Limitations and next steps
-- **Overdue reservations aren't cancelled automatically.** Staff see them flagged and decide; a scheduled job could cancel them after 14 days.
-- **No spam protection yet.** Anyone can submit adoptions; a production version would add email verification or a CAPTCHA, and rate limits.
-- **Renewals** from the staff page, and **confirmation emails** to adopters.
-- Payment, confirmation emails and renewal reminders.
+The park has 500+ benches and no single place that says which ones are adopted, by whom, or until when. This app is that place. Visitors can browse every bench and adopt an available one; staff get a logged-in view to manage the records.
 
 ## Staff demo login
-Reviewers can try the staff page at `/staff.html` with the demo account: **email:** `ADD-DEMO-EMAIL` / **password:** `ADD-DEMO-PASSWORD`. All existing data is sample data.
 
-## Running locally
-Download `index.html` and open it in any browser. No installation needed; the map needs an internet connection to load the Leaflet library.
+email: `ADD-DEMO-EMAIL`
+password: `ADD-DEMO-PASSWORD`
+
+It's a demo account and everything in the database is sample data, so feel free to click around (mark things paid, cancel, edit).
+
+## What it does
+
+**Public site (`index.html`)**
+- All 512 benches, as a grid grouped by area or on a map of the park
+- Filter by status (available / adopted / ending soon) and area, search by bench number or adopter name
+- Click a bench to see who adopted it and until when, or to adopt it
+- The adoption form shows the fee estimate and where to pay
+
+**Staff page (`staff.html`)**
+- Every adoption, including emails (which the public never sees)
+- Mark as paid, edit name/email/plaque text, cancel, restore
+- Totals for outstanding and collected payments, and adoptions ending soon (renewal calls)
+- Download the current view as a CSV
+
+## How it's built
+
+Plain HTML/CSS/JS, no build step. Leaflet for the map, Supabase (Postgres) for the database. Hosted on GitHub Pages.
+
+The benches themselves are fixed and live in the code. Adoptions are the only thing that changes, so they're the only thing in the database: one `adoptions` table. `setup.sql` has the schema, permissions and sample data.
+
+A few decisions worth explaining:
+
+- **Status is calculated from dates, never stored.** A bench is adopted if it has a non-cancelled adoption that hasn't ended yet. When an adoption ends, the bench frees up on its own; nobody has to remember to update anything.
+- **The database blocks double adoptions, not just the page.** The page checks availability first, but two people could click at the same moment. An exclusion constraint on (bench, date range) makes overlapping adoptions impossible at the database level, and the page turns that error into a friendly message.
+- **Permissions live in the database.** The Supabase key in the page is public by design, so row-level security and column grants decide what it can do. Anonymous visitors can read adoptions (minus email and fee) and insert new ones, always as "pending". Only logged-in staff can read emails or update rows. Public sign-ups are off, so staff accounts are created by hand.
+- **The fee is computed by the database** from the duration, so it can't be edited from the browser.
+- **Payment is a status, not a feature.** The brief said no payments, so new adoptions are just reserved as "awaiting payment" and staff mark them paid. Unpaid ones get flagged as overdue after 14 days.
+- **Map and grid use the same filter function**, so they can't disagree.
+
+## A bug worth mentioning
+
+After connecting the database, adopting a bench late at night didn't change its color. The database runs on UTC, so after 8pm in New York it was already "tomorrow" there, and new adoptions were saved with tomorrow's start date. The page, on New York time, saw an adoption that hadn't started yet and showed the bench as available.
+
+Two fixes: the database now uses New York dates for new adoptions, and the page treats any adoption that hasn't *ended* as taking the bench, including future ones. The second one is more correct anyway, since a reserved bench should never be offered to someone else.
+
+## Where the data comes from
+
+- **Fees** follow the real Van Cortlandt Park Alliance program: $3,500 to adopt an existing bench for 10 years (vancortlandt.org/bench). Shorter terms are prorated.
+- **The map** is my own drawing of the park, traced from Google Maps screenshots and lined up with real coordinates using landmarks with known positions (Van Cortlandt House and the 242 St, Woodlawn and Mosholu Pkwy stations). It's accurate to about 30 m. The walking paths were pulled out of the screenshots by detecting the trail lines, and benches are spaced along them. For a real deployment I'd use NYC Open Data or OpenStreetMap instead, since Google's map data isn't free to reuse.
+- **Bench locations and existing adoptions are made up.** The real bench inventory would come from NYC Parks.
+
+## Assumptions
+
+- One adopter (person or group) per bench at a time.
+- Adoptions start the day they're made and last 6 months to 10 years.
+- Payment happens in person at the Broadway & W 242nd St entrance within 14 days. That's a demo choice; the real Alliance takes payments online, by check or Zelle.
+- 512 benches across 9 areas.
+
+## What I'd do next
+
+- Confirmation emails to adopters
+- Renewals from the staff page
+- Auto-cancel reservations that stay unpaid (right now staff decide)
+- Spam protection (CAPTCHA or email verification) since anyone can submit an adoption
+- Split `index.html` into separate files; the map data makes it long
+
+## Running it
+
+Open `index.html` in a browser; it talks to the hosted database, so there's nothing to install. To point it at your own database, run `setup.sql` in a new Supabase project and swap the URL and publishable key at the top of the script in `index.html` and `staff.html`.
