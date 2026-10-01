@@ -1,5 +1,4 @@
 -- Van Cortlandt Park bench adoption: database setup (Supabase / Postgres)
--- Paste this whole file into Supabase > SQL Editor and click Run.
 
 -- Needed so the "no double adoption" rule can compare bench IDs
 create extension if not exists btree_gist with schema extensions;
